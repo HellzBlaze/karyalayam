@@ -140,12 +140,17 @@ async function unlockFlow() {
     setLockError('Enter your PIN.');
     return;
   }
-  const ok = await verifyPin(pin);
-  if (!ok) {
-    setLockError('Wrong PIN. Try again.');
-    return;
+  try {
+    const ok = await verifyPin(pin);
+    if (!ok) {
+      setLockError('Wrong PIN. Try again.');
+      return;
+    }
+    unlockApp();
+  } catch (err) {
+    console.error('Unlock failed', err);
+    setLockError('Unlock failed in this browser. Try refresh, or Reset.');
   }
-  unlockApp();
 }
 
 async function setOrChangePinFlow() {
@@ -154,26 +159,37 @@ async function setOrChangePinFlow() {
     return;
   }
 
-  const existing = Boolean(localStorage.getItem(PIN_KEY) && localStorage.getItem(PIN_SALT_KEY));
-  if (existing) {
-    const current = prompt('Enter current PIN to change it:');
-    if (!current) return;
-    const ok = await verifyPin(current.trim());
-    if (!ok) {
-      alert('Current PIN is incorrect.');
+  try {
+    const existing = Boolean(localStorage.getItem(PIN_KEY) && localStorage.getItem(PIN_SALT_KEY));
+    if (existing) {
+      const current = prompt('Enter current PIN to change it:');
+      if (!current) return;
+      const ok = await verifyPin(current.trim());
+      if (!ok) {
+        alert('Current PIN is incorrect.');
+        return;
+      }
+    }
+
+    const next = prompt('Set a new PIN (4-12 digits recommended):');
+    if (!next) return;
+    const pin = next.trim();
+    if (pin.length < 4) {
+      alert('PIN too short. Use at least 4 characters.');
       return;
     }
-  }
+    await savePin(pin);
 
-  const next = prompt('Set a new PIN (4-12 digits recommended):');
-  if (!next) return;
-  const pin = next.trim();
-  if (pin.length < 4) {
-    alert('PIN too short. Use at least 4 characters.');
-    return;
+    const stored = Boolean(localStorage.getItem(PIN_KEY) && localStorage.getItem(PIN_SALT_KEY));
+    if (!stored) {
+      alert('PIN was not saved (browser blocked secure storage).');
+      return;
+    }
+    alert('PIN saved. Use “Lock now” to lock the app.');
+  } catch (err) {
+    console.error('Set/change PIN failed', err);
+    alert('Could not set/change PIN in this browser.');
   }
-  await savePin(pin);
-  alert('PIN saved. Use “Lock now” to lock the app.');
 }
 
 function resetEverything() {
@@ -220,8 +236,7 @@ async function pbkdf2Hash(pin, saltBytes) {
 
 async function savePin(pin) {
   if (!window.crypto || !crypto.subtle) {
-    alert('Secure PIN storage is not supported in this browser.');
-    return;
+    throw new Error('crypto.subtle not available');
   }
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const hash = await pbkdf2Hash(pin, salt);
