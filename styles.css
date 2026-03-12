@@ -52,6 +52,18 @@ body::before {
   z-index: -1;
 }
 
+html[data-theme='light'] body {
+  background: radial-gradient(circle at top, #ffffff 0, #f3f4f6 45%, #eef2ff 100%);
+}
+
+html[data-theme='light'] body::before {
+  background:
+    radial-gradient(circle at top left, rgba(79, 70, 229, 0.08), transparent 55%),
+    radial-gradient(circle at top right, rgba(14, 165, 233, 0.06), transparent 55%),
+    radial-gradient(circle at bottom, rgba(15, 23, 42, 0.05), transparent 60%);
+  opacity: 1;
+}
+
 main {
   padding: 1.5rem;
 }
