@@ -8,6 +8,7 @@ const state = {
   tasks: [],
   search: '',
   priorityFilter: 'all',
+  sort: 'pinned_due',
   activeView: 'notes',
 };
 
@@ -28,6 +29,7 @@ function saveState() {
     calls: state.calls,
     projects: state.projects,
     tasks: state.tasks,
+    sort: state.sort,
     activeView: state.activeView,
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
@@ -36,6 +38,7 @@ function saveState() {
 let currentRecorder = null;
 let currentRecorderStream = null;
 let currentRecorderChunks = [];
+const reminderTimeouts = new Map();
 
 function uid() {
   return `id_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
@@ -48,6 +51,7 @@ function init() {
   wireToolbar();
   wireFilters();
   wireModal();
+  scheduleAllTaskReminders();
   renderAll();
 }
 
@@ -182,6 +186,16 @@ function wireToolbar() {
     renderAll();
   });
 
+  const sortSelect = document.getElementById('sort-select');
+  if (sortSelect) {
+    sortSelect.value = state.sort || 'pinned_due';
+    sortSelect.addEventListener('change', () => {
+      state.sort = sortSelect.value;
+      saveState();
+      renderAll();
+    });
+  }
+
   document.getElementById('add-note').addEventListener('click', () => {
     openModal('note');
   });
@@ -258,6 +272,9 @@ function openModal(type, mode = 'create', id = null) {
   if (type === 'call') {
     wireCallRecordingControls(form);
   }
+  if (type === 'task') {
+    wireTaskProjectControls(form);
+  }
 
   if (mode === 'edit' && id) {
     const items = state[`${type}s`];
@@ -290,8 +307,12 @@ function openModal(type, mode = 'create', id = null) {
         form.querySelector('[name="description"]').value = item.description || '';
         form.querySelector('[name="priority"]').value = item.priority || 'medium';
         form.querySelector('[name="dueDate"]').value = item.dueDate || '';
-        form.querySelector('[name="project"]').value = item.project || '';
+        setTaskProjectUI(form, item.project || '');
         form.querySelector('[name="status"]').value = item.status || 'not-started';
+        const reminderField = form.querySelector('[name="reminderAt"]');
+        if (reminderField) reminderField.value = item.reminderAtLocal || '';
+        const pinnedField = form.querySelector('[name="pinned"]');
+        if (pinnedField) pinnedField.value = item.pinned ? 'true' : 'false';
       }
     }
     title.textContent = `Edit ${type}`;
@@ -335,6 +356,7 @@ function handleModalSubmit(e) {
         body,
         tags,
         priority,
+        pinned: false,
         createdAt: new Date().toISOString(),
       });
     } else {
@@ -365,6 +387,7 @@ function handleModalSubmit(e) {
         summary,
         followup,
         recordingLocation,
+        pinned: false,
         createdAt: new Date().toISOString(),
       });
     } else {
@@ -406,6 +429,7 @@ function handleModalSubmit(e) {
         dueDate,
         tasks,
         status: 'not-started',
+        pinned: false,
         createdAt: new Date().toISOString(),
       });
     } else {
@@ -427,20 +451,36 @@ function handleModalSubmit(e) {
     const description = form.querySelector('[name="description"]').value.trim();
     const priority = form.querySelector('[name="priority"]').value || 'medium';
     const dueDate = form.querySelector('[name="dueDate"]').value;
-    const project = form.querySelector('[name="project"]').value.trim();
+    const project = getTaskProjectValue(form);
     const status = form.querySelector('[name="status"]').value || 'not-started';
+    const reminderAtLocal = form.querySelector('[name="reminderAt"]')
+      ? form.querySelector('[name="reminderAt"]').value
+      : '';
+    const pinned = form.querySelector('[name="pinned"]')
+      ? form.querySelector('[name="pinned"]').value === 'true'
+      : false;
+    const reminderAt = reminderAtLocal ? new Date(reminderAtLocal).toISOString() : '';
 
     if (mode === 'create') {
+      const newId = uid();
       state.tasks.unshift({
-        id: uid(),
+        id: newId,
         title,
         description,
         priority,
         dueDate,
         project,
         status,
+        pinned,
+        reminderAt,
+        reminderAtLocal,
         createdAt: new Date().toISOString(),
       });
+
+      if (reminderAt) {
+        requestNotificationPermissionIfNeeded();
+        scheduleTaskReminder(newId);
+      }
     } else {
       const idx = state.tasks.findIndex((t) => t.id === id);
       if (idx !== -1) {
@@ -452,7 +492,17 @@ function handleModalSubmit(e) {
           dueDate,
           project,
           status,
+          pinned,
+          reminderAt,
+          reminderAtLocal,
         };
+      }
+
+      if (reminderAt && id) {
+        requestNotificationPermissionIfNeeded();
+        scheduleTaskReminder(id);
+      } else if (id) {
+        clearTaskReminder(id);
       }
     }
   }
@@ -497,6 +547,51 @@ function renderAll() {
   renderTasks();
 }
 
+function priorityRank(priority) {
+  if (priority === 'high') return 0;
+  if (priority === 'medium') return 1;
+  return 2;
+}
+
+function safeDateValue(isoOrDate) {
+  if (!isoOrDate) return Number.POSITIVE_INFINITY;
+  const d = new Date(isoOrDate);
+  const t = d.getTime();
+  return Number.isFinite(t) ? t : Number.POSITIVE_INFINITY;
+}
+
+function applySorting(items, type) {
+  const sorted = [...items];
+  const sortMode = state.sort || 'pinned_due';
+
+  sorted.sort((a, b) => {
+    const ap = a.pinned ? 1 : 0;
+    const bp = b.pinned ? 1 : 0;
+    if (ap !== bp) return bp - ap; // pinned first
+
+    if (sortMode.endsWith('_priority')) {
+      const pr = priorityRank(a.priority) - priorityRank(b.priority);
+      if (pr !== 0) return pr;
+    }
+
+    if (sortMode.endsWith('_due')) {
+      // Tasks: dueDate, Projects: dueDate, others: createdAt fallback
+      const ad = safeDateValue(a.dueDate || a.date || a.createdAt);
+      const bd = safeDateValue(b.dueDate || b.date || b.createdAt);
+      if (ad !== bd) return ad - bd;
+    }
+
+    // newest fallback
+    const an = safeDateValue(a.createdAt);
+    const bn = safeDateValue(b.createdAt);
+    if (an !== bn) return bn - an;
+
+    return 0;
+  });
+
+  return sorted;
+}
+
 function priorityBadge(priority) {
   const cls =
     priority === 'high'
@@ -516,7 +611,7 @@ function priorityBadge(priority) {
 
 function renderNotes() {
   const container = document.getElementById('notes-list');
-  const items = state.notes.filter((n) => matchesFilters(n, 'note'));
+  const items = applySorting(state.notes.filter((n) => matchesFilters(n, 'note')), 'note');
   if (!items.length) {
     container.classList.add('empty-state');
     container.innerHTML = '<p>No notes found. Try a different filter or add a note.</p>';
@@ -551,6 +646,7 @@ function renderNotes() {
             <span class="tag">Note</span>
           </div>
           <div class="card-actions">
+            <button data-action="pin">${note.pinned ? 'Unpin' : 'Pin'}</button>
             <button data-action="edit">Edit</button>
             <button class="danger" data-action="delete">Delete</button>
           </div>
@@ -565,7 +661,12 @@ function renderNotes() {
       const card = e.target.closest('.card');
       const id = card.dataset.id;
       const action = e.target.dataset.action;
-      if (action === 'edit') {
+      if (action === 'pin') {
+        const idx = state.notes.findIndex((n) => n.id === id);
+        if (idx !== -1) state.notes[idx].pinned = !state.notes[idx].pinned;
+        saveState();
+        renderAll();
+      } else if (action === 'edit') {
         openModal('note', 'edit', id);
       } else if (action === 'delete') {
         state.notes = state.notes.filter((n) => n.id !== id);
@@ -578,7 +679,7 @@ function renderNotes() {
 
 function renderCalls() {
   const container = document.getElementById('calls-list');
-  const items = state.calls.filter((n) => matchesFilters(n, 'call'));
+  const items = applySorting(state.calls.filter((n) => matchesFilters(n, 'call')), 'call');
   if (!items.length) {
     container.classList.add('empty-state');
     container.innerHTML = '<p>No calls found. Try a different filter or add a call.</p>';
@@ -627,6 +728,7 @@ function renderCalls() {
             <span class="tag">Call</span>
           </div>
           <div class="card-actions">
+            <button data-action="pin">${call.pinned ? 'Unpin' : 'Pin'}</button>
             <button data-action="edit">Edit</button>
             <button class="danger" data-action="delete">Delete</button>
           </div>
@@ -641,7 +743,12 @@ function renderCalls() {
       const card = e.target.closest('.card');
       const id = card.dataset.id;
       const action = e.target.dataset.action;
-      if (action === 'edit') {
+      if (action === 'pin') {
+        const idx = state.calls.findIndex((n) => n.id === id);
+        if (idx !== -1) state.calls[idx].pinned = !state.calls[idx].pinned;
+        saveState();
+        renderAll();
+      } else if (action === 'edit') {
         openModal('call', 'edit', id);
       } else if (action === 'delete') {
         state.calls = state.calls.filter((n) => n.id !== id);
@@ -654,7 +761,7 @@ function renderCalls() {
 
 function renderProjects() {
   const container = document.getElementById('projects-list');
-  const items = state.projects.filter((n) => matchesFilters(n, 'project'));
+  const items = applySorting(state.projects.filter((n) => matchesFilters(n, 'project')), 'project');
   if (!items.length) {
     container.classList.add('empty-state');
     container.innerHTML = '<p>No projects yet. Try a different filter or add a project.</p>';
@@ -725,6 +832,7 @@ function renderProjects() {
             <span class="tag">Project</span>
           </div>
           <div class="card-actions">
+            <button data-action="pin">${project.pinned ? 'Unpin' : 'Pin'}</button>
             <button data-action="edit">Edit</button>
             <button data-action="toggle-status">${
               status === 'done' ? 'Mark in progress' : 'Mark done'
@@ -744,7 +852,11 @@ function renderProjects() {
       const action = e.target.dataset.action;
       const idx = state.projects.findIndex((p) => p.id === id);
       if (idx === -1) return;
-      if (action === 'edit') {
+      if (action === 'pin') {
+        state.projects[idx].pinned = !state.projects[idx].pinned;
+        saveState();
+        renderAll();
+      } else if (action === 'edit') {
         openModal('project', 'edit', id);
       } else if (action === 'delete') {
         state.projects.splice(idx, 1);
@@ -763,7 +875,7 @@ function renderProjects() {
 function renderTasks() {
   const container = document.getElementById('tasks-list');
   if (!container) return;
-  const items = state.tasks.filter((t) => matchesFilters(t, 'task'));
+  const items = applySorting(state.tasks.filter((t) => matchesFilters(t, 'task')), 'task');
   if (!items.length) {
     container.classList.add('empty-state');
     container.innerHTML = '<p>No tasks yet. Try a different filter or add a task.</p>';
@@ -816,6 +928,7 @@ function renderTasks() {
             <span class="tag">Task</span>
           </div>
           <div class="card-actions">
+            <button data-action="pin">${task.pinned ? 'Unpin' : 'Pin'}</button>
             <button data-action="edit">Edit</button>
             <button data-action="toggle-status">${
               status === 'done' ? 'Mark in progress' : 'Mark done'
@@ -835,9 +948,14 @@ function renderTasks() {
       const action = e.target.dataset.action;
       const idx = state.tasks.findIndex((t) => t.id === id);
       if (idx === -1) return;
-      if (action === 'edit') {
+      if (action === 'pin') {
+        state.tasks[idx].pinned = !state.tasks[idx].pinned;
+        saveState();
+        renderAll();
+      } else if (action === 'edit') {
         openModal('task', 'edit', id);
       } else if (action === 'delete') {
+        clearTaskReminder(id);
         state.tasks.splice(idx, 1);
         saveState();
         renderAll();
@@ -849,6 +967,126 @@ function renderTasks() {
       }
     }),
   );
+}
+
+function wireTaskProjectControls(form) {
+  const select = form.querySelector('[name="projectSelect"]');
+  const other = form.querySelector('[name="projectOther"]');
+  if (!select || !other) return;
+
+  // Populate projects (keep None + Other)
+  const existingValue = select.value;
+  const keep = Array.from(select.querySelectorAll('option')).filter((o) =>
+    ['', '__other__'].includes(o.value),
+  );
+  select.innerHTML = '';
+  keep.forEach((o) => select.appendChild(o));
+
+  const projectNames = state.projects
+    .map((p) => (p && p.name ? String(p.name).trim() : ''))
+    .filter(Boolean);
+  Array.from(new Set(projectNames))
+    .sort((a, b) => a.localeCompare(b))
+    .forEach((name) => {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      select.insertBefore(opt, select.querySelector('option[value="__other__"]'));
+    });
+
+  if (existingValue) select.value = existingValue;
+
+  select.addEventListener('change', () => {
+    if (select.value === '__other__') {
+      other.classList.remove('hidden');
+      other.focus();
+    } else {
+      other.classList.add('hidden');
+      other.value = '';
+    }
+  });
+}
+
+function setTaskProjectUI(form, projectValue) {
+  const select = form.querySelector('[name="projectSelect"]');
+  const other = form.querySelector('[name="projectOther"]');
+  if (!select || !other) return;
+
+  const options = Array.from(select.options).map((o) => o.value);
+  if (!projectValue) {
+    select.value = '';
+    other.classList.add('hidden');
+    other.value = '';
+    return;
+  }
+  if (options.includes(projectValue)) {
+    select.value = projectValue;
+    other.classList.add('hidden');
+    other.value = '';
+  } else {
+    select.value = '__other__';
+    other.classList.remove('hidden');
+    other.value = projectValue;
+  }
+}
+
+function getTaskProjectValue(form) {
+  const select = form.querySelector('[name="projectSelect"]');
+  const other = form.querySelector('[name="projectOther"]');
+  if (!select || !other) return '';
+  if (select.value === '__other__') return other.value.trim();
+  return select.value.trim();
+}
+
+function requestNotificationPermissionIfNeeded() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    Notification.requestPermission().catch(() => {});
+  }
+}
+
+function clearTaskReminder(taskId) {
+  const t = reminderTimeouts.get(taskId);
+  if (t) {
+    clearTimeout(t);
+    reminderTimeouts.delete(taskId);
+  }
+}
+
+function scheduleTaskReminder(taskId) {
+  clearTaskReminder(taskId);
+  const task = state.tasks.find((t) => t.id === taskId);
+  if (!task || !task.reminderAt) return;
+  const when = new Date(task.reminderAt).getTime();
+  if (!Number.isFinite(when)) return;
+  const delay = when - Date.now();
+  if (delay <= 0) return;
+
+  const timeoutId = setTimeout(() => {
+    const title = 'Task reminder';
+    const body = task.title || 'Task due';
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification(title, { body });
+      } catch {
+        alert(`${title}: ${body}`);
+      }
+    } else {
+      alert(`${title}: ${body}`);
+    }
+    reminderTimeouts.delete(taskId);
+  }, Math.min(delay, 2_147_000_000)); // clamp for setTimeout max
+
+  reminderTimeouts.set(taskId, timeoutId);
+}
+
+function scheduleAllTaskReminders() {
+  // Clear any existing timeouts
+  reminderTimeouts.forEach((t) => clearTimeout(t));
+  reminderTimeouts.clear();
+  state.tasks.forEach((t) => {
+    if (t.reminderAt) scheduleTaskReminder(t.id);
+  });
 }
 
 function escapeHtml(str) {
@@ -893,8 +1131,9 @@ function importData(event) {
       state.notes = Array.isArray(data.notes) ? data.notes : [];
       state.calls = Array.isArray(data.calls) ? data.calls : [];
       state.projects = Array.isArray(data.projects) ? data.projects : [];
-       state.tasks = Array.isArray(data.tasks) ? data.tasks : [];
+      state.tasks = Array.isArray(data.tasks) ? data.tasks : [];
       saveState();
+      scheduleAllTaskReminders();
       renderAll();
     } catch (err) {
       console.error('Failed to import data', err);
