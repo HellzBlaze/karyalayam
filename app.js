@@ -1,4 +1,5 @@
 const STORAGE_KEY = 'office-desk-data-v1';
+const THEME_KEY = 'karyalayam-theme';
 
 const state = {
   notes: [],
@@ -51,20 +52,41 @@ function init() {
 }
 
 function initTheme() {
-  const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
-  if (prefersLight) {
-    document.documentElement.setAttribute('data-theme', 'light');
-  }
   const btn = document.getElementById('toggle-theme');
+  if (!btn) return;
+
+  const prefersLight =
+    window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+  const saved = localStorage.getItem(THEME_KEY); // 'light' | 'dark' | null
+  const initial = saved || (prefersLight ? 'light' : 'dark');
+
+  applyTheme(initial);
+  updateThemeButton(btn);
+
   btn.addEventListener('click', () => {
-    const current = document.documentElement.getAttribute('data-theme');
+    const current = getTheme();
     const next = current === 'light' ? 'dark' : 'light';
-    if (next === 'dark') {
-      document.documentElement.removeAttribute('data-theme');
-    } else {
-      document.documentElement.setAttribute('data-theme', 'light');
-    }
+    applyTheme(next);
+    localStorage.setItem(THEME_KEY, next);
+    updateThemeButton(btn);
   });
+}
+
+function getTheme() {
+  return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+}
+
+function applyTheme(theme) {
+  if (theme === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+}
+
+function updateThemeButton(btn) {
+  const theme = getTheme();
+  btn.textContent = `Theme: ${theme === 'light' ? 'Light' : 'Dark'}`;
 }
 
 function wireCallRecordingControls(form) {
