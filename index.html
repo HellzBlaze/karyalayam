@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Karyalayam – Notes & Tasks Hub</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="top-bar">
+      <div class="brand">
+        <span class="brand-logo">KA</span>
+        <div>
+          <h1>Karyalayam</h1>
+          <p class="subtitle">Notes, calls, projects & tasks in one place</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button id="toggle-theme" class="ghost-btn">Toggle theme</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="layout">
+        <aside class="sidebar">
+          <h2>Workspace</h2>
+          <nav class="nav">
+            <button class="nav-item active" data-view="notes">Notes</button>
+            <button class="nav-item" data-view="calls">Call log</button>
+            <button class="nav-item" data-view="projects">Projects</button>
+            <button class="nav-item" data-view="tasks">Tasks</button>
+          </nav>
+
+          <div class="sidebar-section">
+            <h3>Quick filters</h3>
+            <div class="pill-row" id="priority-filters">
+              <button class="pill pill-active" data-priority="all">All</button>
+              <button class="pill" data-priority="high">High</button>
+              <button class="pill" data-priority="medium">Medium</button>
+              <button class="pill" data-priority="low">Low</button>
+            </div>
+          </div>
+
+          <div class="sidebar-section">
+            <h3>Data</h3>
+            <button id="export-data" class="ghost-btn small">Export JSON</button>
+            <input type="file" id="import-file" class="hidden" accept="application/json" />
+            <button id="import-data" class="ghost-btn small">Import JSON</button>
+          </div>
+        </aside>
+
+        <section class="content">
+          <div class="toolbar">
+            <div class="search-group">
+              <input
+                id="search-input"
+                type="search"
+                placeholder="Search by title, content, contact, or project…"
+              />
+            </div>
+            <div class="toolbar-actions">
+              <button id="add-note" class="primary-btn">New note</button>
+              <button id="add-call" class="primary-btn secondary">New call</button>
+              <button id="add-project" class="primary-btn secondary">New project</button>
+              <button id="add-task" class="primary-btn secondary">New task</button>
+            </div>
+          </div>
+
+          <section id="view-notes" class="view active-view">
+            <header class="view-header">
+              <h2>Notes</h2>
+              <p>Capture quick thoughts, meeting minutes, and ideas.</p>
+            </header>
+            <div id="notes-list" class="card-grid empty-state">
+              <p>No notes yet. Click “New note” to create your first one.</p>
+            </div>
+          </section>
+
+          <section id="view-calls" class="view">
+            <header class="view-header">
+              <h2>Call log</h2>
+              <p>Track phone calls and meeting follow-ups.</p>
+            </header>
+            <div id="calls-list" class="card-grid empty-state">
+              <p>No calls logged yet. Click “New call” to add one.</p>
+            </div>
+          </section>
+
+          <section id="view-projects" class="view">
+            <header class="view-header">
+              <h2>Projects</h2>
+              <p>Organize related work, milestones, and major outcomes.</p>
+            </header>
+            <div id="projects-list" class="card-grid empty-state">
+              <p>No projects yet. Click “New project” to get started.</p>
+            </div>
+          </section>
+
+          <section id="view-tasks" class="view">
+            <header class="view-header">
+              <h2>Tasks</h2>
+              <p>Standalone to-dos, linked to projects only when you need.</p>
+            </header>
+            <div id="tasks-list" class="card-grid empty-state">
+              <p>No tasks yet. Click “New task” to add your first one.</p>
+            </div>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <div id="modal-backdrop" class="modal-backdrop hidden">
+      <div class="modal">
+        <header class="modal-header">
+          <h2 id="modal-title">New item</h2>
+          <button id="modal-close" class="icon-btn" aria-label="Close">
+            ✕
+          </button>
+        </header>
+        <form id="modal-form" class="modal-body">
+          <!-- Dynamic form fields injected by app.js -->
+        </form>
+        <footer class="modal-footer">
+          <button type="button" id="modal-cancel" class="ghost-btn">Cancel</button>
+          <button type="submit" form="modal-form" class="primary-btn">Save</button>
+        </footer>
+      </div>
+    </div>
+
+    <template id="note-form-template">
+      <div class="field">
+        <label for="note-title">Title</label>
+        <input id="note-title" name="title" required />
+      </div>
+      <div class="field">
+        <label for="note-body">Note</label>
+        <textarea id="note-body" name="body" rows="5"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="note-tags">Tags (comma separated)</label>
+          <input id="note-tags" name="tags" placeholder="meeting, finance" />
+        </div>
+        <div class="field">
+          <label for="note-priority">Priority</label>
+          <select id="note-priority" name="priority">
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+      </div>
+    </template>
+
+    <template id="call-form-template">
+      <div class="field-row">
+        <div class="field">
+          <label for="call-contact">Contact / Company</label>
+          <input id="call-contact" name="contact" required />
+        </div>
+        <div class="field">
+          <label for="call-date">Date</label>
+          <input id="call-date" name="date" type="date" />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="call-direction">Type</label>
+          <select id="call-direction" name="direction">
+            <option value="outgoing">Outgoing</option>
+            <option value="incoming">Incoming</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="call-priority">Priority</label>
+          <select id="call-priority" name="priority">
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Recording (microphone)</label>
+        <div class="record-controls">
+          <button type="button" id="call-record-start" class="ghost-btn small">
+            Start recording
+          </button>
+          <button type="button" id="call-record-stop" class="ghost-btn small" disabled>
+            Stop
+          </button>
+          <span id="call-record-status" class="record-status-text"></span>
+        </div>
+        <small class="help-text"
+          >This records from your microphone only. After stopping, download the audio file and
+          save it where you prefer.</small
+        >
+        <audio id="call-record-audio" class="hidden" controls></audio>
+        <div class="field" style="margin-top: 0.4rem">
+          <label for="call-record-location">Where did you save the recording? (optional)</label>
+          <input
+            id="call-record-location"
+            name="recordingLocation"
+            placeholder="e.g. Teams link or D:\Calls\ClientA-2026-03-10.webm"
+          />
+        </div>
+      </div>
+      <div class="field">
+        <label for="call-summary">Summary / Notes</label>
+        <textarea id="call-summary" name="summary" rows="4"></textarea>
+      </div>
+      <div class="field">
+        <label for="call-followup">Follow-up tasks</label>
+        <textarea
+          id="call-followup"
+          name="followup"
+          rows="3"
+          placeholder="E.g., send proposal, book demo, share documents"
+        ></textarea>
+      </div>
+    </template>
+
+    <template id="project-form-template">
+      <div class="field">
+        <label for="project-name">Project name</label>
+        <input id="project-name" name="name" required />
+      </div>
+      <div class="field">
+        <label for="project-description">Description</label>
+        <textarea id="project-description" name="description" rows="4"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="project-priority">Priority</label>
+          <select id="project-priority" name="priority">
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="project-due">Due date (optional)</label>
+          <input id="project-due" name="dueDate" type="date" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="project-tasks">Tasks (one per line, optional)</label>
+        <textarea
+          id="project-tasks"
+          name="tasks"
+          rows="4"
+          placeholder="Design mockups&#10;Get approvals&#10;Launch internal pilot"
+        ></textarea>
+      </div>
+    </template>
+
+    <template id="task-form-template">
+      <div class="field">
+        <label for="task-title">Task</label>
+        <input id="task-title" name="title" required placeholder="e.g. Send proposal to client" />
+      </div>
+      <div class="field">
+        <label for="task-description">Details (optional)</label>
+        <textarea id="task-description" name="description" rows="3"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="task-priority">Priority</label>
+          <select id="task-priority" name="priority">
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="task-due">Due date (optional)</label>
+          <input id="task-due" name="dueDate" type="date" />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="task-project">Linked project (optional)</label>
+          <input
+            id="task-project"
+            name="project"
+            placeholder="e.g. Onboarding revamp, ACME rollout"
+          />
+        </div>
+        <div class="field">
+          <label for="task-status">Status</label>
+          <select id="task-status" name="status">
+            <option value="not-started">Not started</option>
+            <option value="in-progress">In progress</option>
+            <option value="done">Done</option>
+          </select>
+        </div>
+      </div>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>
+
