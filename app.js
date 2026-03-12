@@ -1,5 +1,7 @@
 const STORAGE_KEY = 'office-desk-data-v1';
 const THEME_KEY = 'karyalayam-theme';
+const PIN_KEY = 'karyalayam-pin-v1';
+const PIN_SALT_KEY = 'karyalayam-pin-salt-v1';
 
 const state = {
   notes: [],
@@ -39,6 +41,7 @@ let currentRecorder = null;
 let currentRecorderStream = null;
 let currentRecorderChunks = [];
 const reminderTimeouts = new Map();
+let isUnlocked = true;
 
 function uid() {
   return `id_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
@@ -47,12 +50,198 @@ function uid() {
 function init() {
   loadState();
   initTheme();
+  initSecurity();
   wireNav();
   wireToolbar();
   wireFilters();
   wireModal();
   scheduleAllTaskReminders();
   renderAll();
+}
+
+function initSecurity() {
+  wireSecurityButtons();
+  const hasPin = Boolean(localStorage.getItem(PIN_KEY) && localStorage.getItem(PIN_SALT_KEY));
+  if (hasPin) {
+    lockApp();
+  } else {
+    isUnlocked = true;
+  }
+}
+
+function wireSecurityButtons() {
+  const setPinBtn = document.getElementById('set-pin');
+  const lockNowBtn = document.getElementById('lock-now');
+  const resetBtn = document.getElementById('reset-app');
+
+  if (setPinBtn) setPinBtn.addEventListener('click', setOrChangePinFlow);
+  if (lockNowBtn) lockNowBtn.addEventListener('click', lockApp);
+  if (resetBtn)
+    resetBtn.addEventListener('click', () => {
+      const ok = confirm('Reset app? This clears ALL notes/calls/projects/tasks and your PIN.');
+      if (!ok) return;
+      resetEverything();
+    });
+
+  const unlockBtn = document.getElementById('unlock-btn');
+  const unlockReset = document.getElementById('unlock-reset');
+  const lockPin = document.getElementById('lock-pin');
+
+  if (unlockBtn) unlockBtn.addEventListener('click', unlockFlow);
+  if (lockPin)
+    lockPin.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') unlockFlow();
+    });
+  if (unlockReset)
+    unlockReset.addEventListener('click', () => {
+      const ok = confirm('Forgot PIN? This will reset the app and clear ALL stored data.');
+      if (!ok) return;
+      resetEverything();
+    });
+}
+
+function lockApp() {
+  isUnlocked = false;
+  document.body.classList.add('locked');
+  const lockBackdrop = document.getElementById('lock-backdrop');
+  const pinInput = document.getElementById('lock-pin');
+  if (lockBackdrop) lockBackdrop.classList.remove('hidden');
+  if (pinInput) {
+    pinInput.value = '';
+    setTimeout(() => pinInput.focus(), 0);
+  }
+  setLockError('');
+}
+
+function unlockApp() {
+  isUnlocked = true;
+  document.body.classList.remove('locked');
+  const lockBackdrop = document.getElementById('lock-backdrop');
+  if (lockBackdrop) lockBackdrop.classList.add('hidden');
+  setLockError('');
+}
+
+function setLockError(msg) {
+  const el = document.getElementById('lock-error');
+  if (!el) return;
+  if (!msg) {
+    el.textContent = '';
+    el.classList.add('hidden');
+  } else {
+    el.textContent = msg;
+    el.classList.remove('hidden');
+  }
+}
+
+async function unlockFlow() {
+  const pinInput = document.getElementById('lock-pin');
+  const pin = pinInput ? pinInput.value.trim() : '';
+  if (!pin) {
+    setLockError('Enter your PIN.');
+    return;
+  }
+  const ok = await verifyPin(pin);
+  if (!ok) {
+    setLockError('Wrong PIN. Try again.');
+    return;
+  }
+  unlockApp();
+}
+
+async function setOrChangePinFlow() {
+  if (!isUnlocked) {
+    alert('Unlock the app first to change the PIN.');
+    return;
+  }
+
+  const existing = Boolean(localStorage.getItem(PIN_KEY) && localStorage.getItem(PIN_SALT_KEY));
+  if (existing) {
+    const current = prompt('Enter current PIN to change it:');
+    if (!current) return;
+    const ok = await verifyPin(current.trim());
+    if (!ok) {
+      alert('Current PIN is incorrect.');
+      return;
+    }
+  }
+
+  const next = prompt('Set a new PIN (4-12 digits recommended):');
+  if (!next) return;
+  const pin = next.trim();
+  if (pin.length < 4) {
+    alert('PIN too short. Use at least 4 characters.');
+    return;
+  }
+  await savePin(pin);
+  alert('PIN saved. Use “Lock now” to lock the app.');
+}
+
+function resetEverything() {
+  reminderTimeouts.forEach((t) => clearTimeout(t));
+  reminderTimeouts.clear();
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(PIN_KEY);
+  localStorage.removeItem(PIN_SALT_KEY);
+  // keep theme preference
+  state.notes = [];
+  state.calls = [];
+  state.projects = [];
+  state.tasks = [];
+  saveState();
+  unlockApp();
+  renderAll();
+}
+
+function toBase64(bytes) {
+  let binary = '';
+  bytes.forEach((b) => (binary += String.fromCharCode(b)));
+  return btoa(binary);
+}
+
+function fromBase64(base64) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+async function pbkdf2Hash(pin, saltBytes) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(pin), 'PBKDF2', false, [
+    'deriveBits',
+  ]);
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', hash: 'SHA-256', salt: saltBytes, iterations: 120000 },
+    keyMaterial,
+    256,
+  );
+  return new Uint8Array(bits);
+}
+
+async function savePin(pin) {
+  if (!window.crypto || !crypto.subtle) {
+    alert('Secure PIN storage is not supported in this browser.');
+    return;
+  }
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const hash = await pbkdf2Hash(pin, salt);
+  localStorage.setItem(PIN_SALT_KEY, toBase64(salt));
+  localStorage.setItem(PIN_KEY, toBase64(hash));
+}
+
+async function verifyPin(pin) {
+  if (!window.crypto || !crypto.subtle) return false;
+  const saltB64 = localStorage.getItem(PIN_SALT_KEY);
+  const hashB64 = localStorage.getItem(PIN_KEY);
+  if (!saltB64 || !hashB64) return true; // no PIN set
+  const salt = fromBase64(saltB64);
+  const expected = fromBase64(hashB64);
+  const actual = await pbkdf2Hash(pin, salt);
+  if (actual.length !== expected.length) return false;
+  // constant-ish time compare
+  let diff = 0;
+  for (let i = 0; i < actual.length; i++) diff |= actual[i] ^ expected[i];
+  return diff === 0;
 }
 
 function initTheme() {
@@ -182,6 +371,7 @@ function wireNav() {
 function wireToolbar() {
   const searchInput = document.getElementById('search-input');
   searchInput.addEventListener('input', () => {
+    if (!isUnlocked) return;
     state.search = searchInput.value.trim().toLowerCase();
     renderAll();
   });
@@ -190,6 +380,7 @@ function wireToolbar() {
   if (sortSelect) {
     sortSelect.value = state.sort || 'pinned_due';
     sortSelect.addEventListener('change', () => {
+      if (!isUnlocked) return;
       state.sort = sortSelect.value;
       saveState();
       renderAll();
@@ -197,15 +388,19 @@ function wireToolbar() {
   }
 
   document.getElementById('add-note').addEventListener('click', () => {
+    if (!isUnlocked) return;
     openModal('note');
   });
   document.getElementById('add-call').addEventListener('click', () => {
+    if (!isUnlocked) return;
     openModal('call');
   });
   document.getElementById('add-project').addEventListener('click', () => {
+    if (!isUnlocked) return;
     openModal('project');
   });
   document.getElementById('add-task').addEventListener('click', () => {
+    if (!isUnlocked) return;
     openModal('task');
   });
 
@@ -220,6 +415,7 @@ function wireFilters() {
   const pills = document.querySelectorAll('#priority-filters .pill');
   pills.forEach((pill) => {
     pill.addEventListener('click', () => {
+      if (!isUnlocked) return;
       state.priorityFilter = pill.dataset.priority;
       pills.forEach((p) => p.classList.toggle('pill-active', p === pill));
       renderAll();
@@ -249,6 +445,7 @@ function wireModal() {
 }
 
 function openModal(type, mode = 'create', id = null) {
+  if (!isUnlocked) return;
   const title = document.getElementById('modal-title');
   const form = document.getElementById('modal-form');
   const backdrop = document.getElementById('modal-backdrop');
@@ -331,6 +528,7 @@ function openModal(type, mode = 'create', id = null) {
 
 function handleModalSubmit(e) {
   e.preventDefault();
+  if (!isUnlocked) return;
   const form = e.target;
   const type = form.dataset.type;
   const mode = form.dataset.mode;
