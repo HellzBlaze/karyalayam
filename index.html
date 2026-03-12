@@ -1,895 +1,358 @@
-:root {
-  --bg: #0b1020;
-  --bg-elevated: #13182a;
-  --bg-elevated-soft: #181d31;
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --accent: #4f46e5;
-  --accent-soft: rgba(79, 70, 229, 0.12);
-  --accent-strong: #6366f1;
-  --accent-high: #f97316;
-  --accent-low: #22c55e;
-  --text-main: #f9fafb;
-  --text-muted: #9ca3af;
-  --danger: #ef4444;
-  --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.45);
-}
-
-[data-theme='light'] {
-  --bg: #f3f4f6;
-  --bg-elevated: #ffffff;
-  --bg-elevated-soft: #f9fafb;
-  --border-subtle: rgba(15, 23, 42, 0.08);
-  --accent-soft: rgba(79, 70, 229, 0.08);
-  --text-main: #0f172a;
-  --text-muted: #6b7280;
-  --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.12);
-}
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: radial-gradient(circle at top, #1e293b 0, #020617 45%, #020617 100%);
-  color: var(--text-main);
-  min-height: 100vh;
-}
-
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background:
-    radial-gradient(circle at top left, rgba(79, 70, 229, 0.18), transparent 55%),
-    radial-gradient(circle at top right, rgba(14, 165, 233, 0.16), transparent 55%),
-    radial-gradient(circle at bottom, rgba(248, 250, 252, 0.04), transparent 60%);
-  opacity: 0.9;
-  pointer-events: none;
-  z-index: -1;
-}
-
-html[data-theme='light'] body {
-  background: radial-gradient(circle at top, #ffffff 0, #f3f4f6 45%, #eef2ff 100%);
-}
-
-html[data-theme='light'] body::before {
-  background:
-    radial-gradient(circle at top left, rgba(79, 70, 229, 0.08), transparent 55%),
-    radial-gradient(circle at top right, rgba(14, 165, 233, 0.06), transparent 55%),
-    radial-gradient(circle at bottom, rgba(15, 23, 42, 0.05), transparent 60%);
-  opacity: 1;
-}
-
-html[data-theme='light'] .top-bar,
-html[data-theme='light'] .sidebar,
-html[data-theme='light'] .content {
-  background: rgba(255, 255, 255, 0.9);
-  border-color: rgba(15, 23, 42, 0.12);
-  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
-}
-
-html[data-theme='light'] .brand-logo {
-  color: #0f172a;
-  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.16), 0 0 18px rgba(79, 70, 229, 0.25);
-}
-
-html[data-theme='light'] #search-input {
-  background: radial-gradient(circle at 0 0, rgba(15, 23, 42, 0.06), rgba(255, 255, 255, 0.92));
-  color: #0f172a;
-  border-color: rgba(15, 23, 42, 0.14);
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
-}
-
-html[data-theme='light'] #search-input::placeholder {
-  color: rgba(15, 23, 42, 0.5);
-}
-
-html[data-theme='light'] input,
-html[data-theme='light'] select,
-html[data-theme='light'] textarea {
-  background: rgba(255, 255, 255, 0.96);
-  color: #0f172a;
-  border-color: rgba(15, 23, 42, 0.16);
-}
-
-html[data-theme='light'] .ghost-btn {
-  background: rgba(255, 255, 255, 0.9);
-  color: rgba(15, 23, 42, 0.78);
-  border-color: rgba(15, 23, 42, 0.18);
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
-}
-
-html[data-theme='light'] .nav-item:hover,
-html[data-theme='light'] .pill:hover {
-  background: rgba(15, 23, 42, 0.06);
-  color: #0f172a;
-}
-
-html[data-theme='light'] .pill {
-  background: rgba(255, 255, 255, 0.9);
-  color: rgba(15, 23, 42, 0.7);
-  border-color: rgba(15, 23, 42, 0.18);
-}
-
-html[data-theme='light'] .card {
-  background:
-    radial-gradient(circle at 0 0, rgba(15, 23, 42, 0.04), rgba(255, 255, 255, 0.96)),
-    linear-gradient(135deg, rgba(79, 70, 229, 0.06), rgba(255, 255, 255, 0.96));
-  border-color: rgba(15, 23, 42, 0.12);
-  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.08);
-}
-
-html[data-theme='light'] .card-body {
-  color: rgba(15, 23, 42, 0.86);
-}
-
-html[data-theme='light'] .tag {
-  background: rgba(15, 23, 42, 0.06);
-  color: rgba(15, 23, 42, 0.75);
-}
-
-html[data-theme='light'] .card-actions button {
-  background: rgba(255, 255, 255, 0.9);
-  color: rgba(15, 23, 42, 0.78);
-  border-color: rgba(15, 23, 42, 0.16);
-}
-
-main {
-  padding: 1.5rem;
-}
-
-.top-bar {
-  max-width: 1180px;
-  margin: 1.25rem auto 0.75rem;
-  padding: 0.9rem 1.3rem;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.9);
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  backdrop-filter: blur(20px);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.brand-logo {
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  background: radial-gradient(circle at 30% 0%, #e5e7eb, #6366f1 45%, #312e81 100%);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: #e5e7eb;
-  box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.7), 0 0 24px rgba(129, 140, 248, 0.7);
-}
-
-.brand h1 {
-  margin: 0;
-  font-size: 1.15rem;
-  letter-spacing: 0.03em;
-}
-
-.subtitle {
-  margin: 0;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-}
-
-.top-actions {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.layout {
-  max-width: 1180px;
-  margin: 0.75rem auto 2rem;
-  display: grid;
-  grid-template-columns: minmax(0, 250px) minmax(0, 1fr);
-  gap: 1.25rem;
-}
-
-.sidebar {
-  background: rgba(15, 23, 42, 0.96);
-  border-radius: 1.2rem;
-  border: 1px solid rgba(148, 163, 184, 0.4);
-  box-shadow: 0 22px 55px rgba(15, 23, 42, 0.9);
-  padding: 1.1rem 1rem 1.2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.sidebar h2 {
-  margin: 0 0 0.2rem;
-  font-size: 0.95rem;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: #e5e7eb;
-}
-
-.sidebar-section h3 {
-  margin: 0 0 0.4rem;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: var(--text-muted);
-}
-
-.nav {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  margin-bottom: 0.2rem;
-}
-
-.nav-item {
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--text-muted);
-  padding: 0.45rem 0.65rem;
-  border-radius: 999px;
-  text-align: left;
-  font-size: 0.85rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  transition:
-    background 0.16s ease,
-    color 0.16s ease,
-    border-color 0.16s ease,
-    transform 0.08s ease;
-}
-
-.nav-item:hover {
-  background: rgba(148, 163, 184, 0.16);
-  color: #e5e7eb;
-}
-
-.nav-item.active {
-  background: linear-gradient(135deg, rgba(79, 70, 229, 0.7), rgba(79, 70, 229, 0.25));
-  border-color: rgba(191, 219, 254, 0.35);
-  color: #e5e7eb;
-  box-shadow: 0 8px 18px rgba(79, 70, 229, 0.55);
-}
-
-.pill-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
-
-.pill {
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.55);
-  background: rgba(15, 23, 42, 0.85);
-  color: var(--text-muted);
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  padding: 0.2rem 0.7rem;
-  cursor: pointer;
-  transition:
-    background 0.16s ease,
-    color 0.16s ease,
-    border-color 0.16s ease,
-    box-shadow 0.16s ease;
-}
-
-.pill:hover {
-  background: rgba(148, 163, 184, 0.16);
-  color: #e5e7eb;
-}
-
-.pill-active {
-  background: rgba(79, 70, 229, 0.22);
-  border-color: rgba(129, 140, 248, 0.9);
-  color: #e5e7eb;
-  box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.5);
-}
-
-.sidebar-section {
-  padding-top: 0.6rem;
-  border-top: 1px dashed rgba(148, 163, 184, 0.4);
-}
-
-.content {
-  background: rgba(15, 23, 42, 0.96);
-  border-radius: 1.25rem;
-  border: 1px solid rgba(148, 163, 184, 0.4);
-  box-shadow: 0 30px 70px rgba(15, 23, 42, 0.95);
-  padding: 1.1rem 1.1rem 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.search-group {
-  flex: 1;
-}
-
-.sort-group select {
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.6);
-  padding: 0.55rem 0.8rem;
-  background: rgba(15, 23, 42, 0.9);
-  color: #e5e7eb;
-  font-size: 0.8rem;
-  outline: none;
-}
-
-.sort-group select:focus {
-  border-color: rgba(129, 140, 248, 0.95);
-  box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.6);
-}
-
-html[data-theme='light'] .sort-group select {
-  background: rgba(255, 255, 255, 0.96);
-  color: #0f172a;
-  border-color: rgba(15, 23, 42, 0.14);
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-#search-input {
-  width: 100%;
-  padding: 0.6rem 0.9rem;
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.6);
-  background: radial-gradient(circle at 0 0, rgba(148, 163, 184, 0.25), rgba(15, 23, 42, 0.9));
-  color: #e5e7eb;
-  font-size: 0.85rem;
-  outline: none;
-  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.9);
-}
-
-#search-input::placeholder {
-  color: rgba(148, 163, 184, 0.7);
-}
-
-#search-input:focus {
-  border-color: rgba(129, 140, 248, 0.9);
-  box-shadow:
-    0 0 0 1px rgba(129, 140, 248, 0.6),
-    0 24px 45px rgba(15, 23, 42, 0.95);
-}
-
-.toolbar-actions {
-  display: flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-}
-
-.primary-btn,
-.ghost-btn,
-.icon-btn {
-  border-radius: 999px;
-  border: none;
-  font-size: 0.8rem;
-  padding: 0.45rem 0.9rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  white-space: nowrap;
-  transition:
-    background 0.14s ease,
-    color 0.14s ease,
-    box-shadow 0.14s ease,
-    transform 0.08s ease;
-}
-
-.primary-btn {
-  background: linear-gradient(135deg, #4f46e5, #6366f1);
-  color: #e5e7eb;
-  border: 1px solid rgba(191, 219, 254, 0.4);
-  box-shadow:
-    0 12px 26px rgba(79, 70, 229, 0.55),
-    0 0 0 1px rgba(129, 140, 248, 0.45);
-}
-
-.primary-btn.secondary {
-  background: rgba(15, 23, 42, 0.9);
-  color: #e5e7eb;
-  border-color: rgba(148, 163, 184, 0.5);
-  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.9);
-}
-
-.primary-btn:hover {
-  transform: translateY(-1px);
-  box-shadow:
-    0 18px 36px rgba(79, 70, 229, 0.65),
-    0 0 0 1px rgba(191, 219, 254, 0.65);
-}
-
-.primary-btn.secondary:hover {
-  background: rgba(30, 64, 175, 0.9);
-}
-
-.ghost-btn {
-  background: rgba(15, 23, 42, 0.7);
-  color: var(--text-muted);
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.7);
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.9);
-}
-
-.ghost-btn.small {
-  font-size: 0.7rem;
-  padding: 0.3rem 0.8rem;
-}
-
-.ghost-btn:hover {
-  background: rgba(148, 163, 184, 0.14);
-  color: #e5e7eb;
-}
-
-.icon-btn {
-  background: transparent;
-  color: var(--text-muted);
-  padding: 0.15rem 0.35rem;
-  border-radius: 999px;
-  border: none;
-}
-
-.icon-btn:hover {
-  background: rgba(148, 163, 184, 0.16);
-  color: #e5e7eb;
-}
-
-.view-header h2 {
-  margin: 0;
-  font-size: 1rem;
-}
-
-.view-header p {
-  margin: 0.15rem 0 0.35rem;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-}
-
-.view {
-  display: none;
-}
-
-.active-view {
-  display: block;
-}
-
-.card-grid {
-  margin-top: 0.2rem;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 0.55rem;
-}
-
-.empty-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-}
-
-.card {
-  position: relative;
-  border-radius: 1rem;
-  padding: 0.7rem 0.8rem 0.65rem;
-  background:
-    radial-gradient(circle at 0 0, rgba(148, 163, 184, 0.22), rgba(15, 23, 42, 0.96)),
-    linear-gradient(135deg, rgba(30, 64, 175, 0.3), rgba(15, 23, 42, 0.96));
-  border: 1px solid rgba(148, 163, 184, 0.55);
-  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.95);
-  cursor: default;
-}
-
-.card-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.4rem;
-}
-
-.card-title {
-  font-size: 0.9rem;
-  font-weight: 600;
-  margin: 0;
-}
-
-.card-meta {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-  margin-top: 0.25rem;
-}
-
-.card-body {
-  margin-top: 0.3rem;
-  font-size: 0.8rem;
-  color: rgba(229, 231, 235, 0.92);
-  max-height: 6.5rem;
-  overflow: hidden;
-}
-
-.card-footer {
-  margin-top: 0.5rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.tag-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-}
-
-.tag {
-  border-radius: 999px;
-  padding: 0.14rem 0.45rem;
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  background: rgba(148, 163, 184, 0.15);
-  color: rgba(209, 213, 219, 0.95);
-}
-
-.badge {
-  border-radius: 999px;
-  padding: 0.1rem 0.5rem;
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  border: 1px solid rgba(148, 163, 184, 0.8);
-}
-
-.badge-high {
-  background: rgba(248, 113, 113, 0.18);
-  border-color: rgba(248, 113, 113, 0.9);
-  color: #fecaca;
-}
-
-.badge-medium {
-  background: rgba(59, 130, 246, 0.18);
-  border-color: rgba(129, 140, 248, 0.9);
-  color: #bfdbfe;
-}
-
-.badge-low {
-  background: rgba(34, 197, 94, 0.18);
-  border-color: rgba(52, 211, 153, 0.9);
-  color: #bbf7d0;
-}
-
-.badge-status {
-  background: rgba(148, 163, 184, 0.16);
-  border-color: rgba(148, 163, 184, 0.9);
-  color: #e5e7eb;
-}
-
-.card-actions {
-  display: flex;
-  gap: 0.2rem;
-}
-
-.card-actions button {
-  font-size: 0.65rem;
-  padding: 0.18rem 0.45rem;
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.7);
-  background: rgba(15, 23, 42, 0.85);
-  color: rgba(209, 213, 219, 0.95);
-  cursor: pointer;
-}
-
-.card-actions button:hover {
-  background: rgba(248, 250, 252, 0.08);
-}
-
-.card-actions .danger {
-  border-color: rgba(248, 113, 113, 0.9);
-  color: #fecaca;
-}
-
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 50;
-}
-
-.modal-backdrop.hidden {
-  display: none;
-}
-
-.modal {
-  width: 100%;
-  max-width: 560px;
-  background: radial-gradient(circle at top, rgba(148, 163, 184, 0.22), rgba(15, 23, 42, 0.98));
-  border-radius: 1.4rem;
-  border: 1px solid rgba(148, 163, 184, 0.7);
-  box-shadow:
-    0 28px 70px rgba(15, 23, 42, 0.98),
-    0 0 0 1px rgba(148, 163, 184, 0.4);
-  padding: 0.9rem 1.1rem 0.9rem;
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  border-bottom: 1px dashed rgba(148, 163, 184, 0.6);
-  padding-bottom: 0.4rem;
-}
-
-.modal-header h2 {
-  margin: 0;
-  font-size: 0.95rem;
-}
-
-.modal-body {
-  margin-top: 0.6rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
-.modal-footer {
-  margin-top: 0.8rem;
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.4rem;
-  border-top: 1px dashed rgba(148, 163, 184, 0.6);
-  padding-top: 0.55rem;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.field-row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.55rem;
-}
-
-label {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-}
-
-input,
-select,
-textarea {
-  border-radius: 0.7rem;
-  border: 1px solid rgba(148, 163, 184, 0.7);
-  padding: 0.45rem 0.6rem;
-  background: rgba(15, 23, 42, 0.95);
-  color: #e5e7eb;
-  font-size: 0.8rem;
-  resize: vertical;
-  outline: none;
-}
-
-textarea {
-  min-height: 80px;
-}
-
-input:focus,
-select:focus,
-textarea:focus {
-  border-color: rgba(129, 140, 248, 0.95);
-  box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.6);
-}
-
-.hidden {
-  display: none;
-}
-
-.record-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-  margin-top: 0.15rem;
-}
-
-.record-status-text {
-  font-size: 0.75rem;
-  color: #f97316;
-}
-
-.help-text {
-  display: block;
-  margin-top: 0.25rem;
-  font-size: 0.72rem;
-  color: var(--text-muted);
-}
-
-.priority-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  display: inline-block;
-  margin-right: 0.18rem;
-}
-
-.priority-dot-high {
-  background: #f97316;
-}
-
-.priority-dot-medium {
-  background: #3b82f6;
-}
-
-.priority-dot-low {
-  background: #22c55e;
-}
-
-.status-pill {
-  border-radius: 999px;
-  padding: 0.12rem 0.55rem;
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  border: 1px solid rgba(148, 163, 184, 0.8);
-  background: rgba(15, 23, 42, 0.9);
-  color: #e5e7eb;
-}
-
-.status-pill.done {
-  background: rgba(34, 197, 94, 0.2);
-  border-color: rgba(34, 197, 94, 0.9);
-  color: #bbf7d0;
-}
-
-.status-pill.in-progress {
-  background: rgba(59, 130, 246, 0.18);
-  border-color: rgba(59, 130, 246, 0.9);
-  color: #bfdbfe;
-}
-
-.status-pill.not-started {
-  background: rgba(148, 163, 184, 0.18);
-}
-
-.project-task-list {
-  margin: 0.35rem 0 0;
-  padding-left: 1.1rem;
-  font-size: 0.75rem;
-  max-height: 5.5rem;
-  overflow: hidden;
-}
-
-.project-task-list li {
-  margin-bottom: 0.1rem;
-}
-
-.project-task-list li.done {
-  text-decoration: line-through;
-  color: rgba(148, 163, 184, 0.75);
-}
-
-.pill-priority-high {
-  background: rgba(248, 113, 113, 0.18);
-  border-color: rgba(248, 113, 113, 0.9);
-}
-
-.pill-priority-medium {
-  background: rgba(59, 130, 246, 0.18);
-  border-color: rgba(59, 130, 246, 0.9);
-}
-
-.pill-priority-low {
-  background: rgba(34, 197, 94, 0.18);
-  border-color: rgba(34, 197, 94, 0.9);
-}
-
-@media (max-width: 900px) {
-  .layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .sidebar {
-    order: -1;
-    flex-direction: row;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem;
-    overflow-x: auto;
-  }
-
-  .nav {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-
-  .sidebar-section {
-    display: none;
-  }
-
-  .top-bar {
-    border-radius: 1.2rem;
-  }
-}
-
-@media (max-width: 640px) {
-  main {
-    padding: 0.75rem;
-  }
-
-  .top-bar {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .toolbar-actions {
-    justify-content: flex-start;
-    width: 100%;
-  }
-
-  .toolbar-actions .primary-btn {
-    flex: 1 1 auto;
-    justify-content: center;
-  }
-
-  .field-row {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .card-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .content {
-    padding: 0.9rem;
-  }
-}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Karyalayam – Notes & Tasks Hub</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="top-bar">
+      <div class="brand">
+        <span class="brand-logo">KA</span>
+        <div>
+          <h1>Karyalayam</h1>
+          <p class="subtitle">Notes, calls, projects & tasks in one place</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button id="toggle-theme" class="ghost-btn">Toggle theme</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="layout">
+        <aside class="sidebar">
+          <h2>Workspace</h2>
+          <nav class="nav">
+            <button class="nav-item active" data-view="notes">Notes</button>
+            <button class="nav-item" data-view="calls">Call log</button>
+            <button class="nav-item" data-view="projects">Projects</button>
+            <button class="nav-item" data-view="tasks">Tasks</button>
+          </nav>
+
+          <div class="sidebar-section">
+            <h3>Quick filters</h3>
+            <div class="pill-row" id="priority-filters">
+              <button class="pill pill-active" data-priority="all">All</button>
+              <button class="pill" data-priority="high">High</button>
+              <button class="pill" data-priority="medium">Medium</button>
+              <button class="pill" data-priority="low">Low</button>
+            </div>
+          </div>
+
+          <div class="sidebar-section">
+            <h3>Data</h3>
+            <button id="export-data" class="ghost-btn small">Export JSON</button>
+            <input type="file" id="import-file" class="hidden" accept="application/json" />
+            <button id="import-data" class="ghost-btn small">Import JSON</button>
+          </div>
+
+          <div class="sidebar-section">
+            <h3>Security</h3>
+            <button id="set-pin" class="ghost-btn small">Set / Change PIN</button>
+            <button id="lock-now" class="ghost-btn small">Lock now</button>
+            <button id="reset-app" class="ghost-btn small">Reset app</button>
+          </div>
+        </aside>
+
+        <section class="content">
+          <div class="toolbar">
+            <div class="search-group">
+              <input
+                id="search-input"
+                type="search"
+                placeholder="Search by title, content, contact, or project…"
+              />
+            </div>
+            <div class="sort-group">
+              <label class="sr-only" for="sort-select">Sort</label>
+              <select id="sort-select" title="Sort">
+                <option value="pinned_due">Pinned, then due date</option>
+                <option value="pinned_priority">Pinned, then priority</option>
+                <option value="pinned_newest">Pinned, then newest</option>
+              </select>
+            </div>
+            <div class="toolbar-actions">
+              <button id="add-note" class="primary-btn">New note</button>
+              <button id="add-call" class="primary-btn secondary">New call</button>
+              <button id="add-project" class="primary-btn secondary">New project</button>
+              <button id="add-task" class="primary-btn secondary">New task</button>
+            </div>
+          </div>
+
+          <section id="view-notes" class="view active-view">
+            <header class="view-header">
+              <h2>Notes</h2>
+              <p>Capture quick thoughts, meeting minutes, and ideas.</p>
+            </header>
+            <div id="notes-list" class="card-grid empty-state">
+              <p>No notes yet. Click “New note” to create your first one.</p>
+            </div>
+          </section>
+
+          <section id="view-calls" class="view">
+            <header class="view-header">
+              <h2>Call log</h2>
+              <p>Track phone calls and meeting follow-ups.</p>
+            </header>
+            <div id="calls-list" class="card-grid empty-state">
+              <p>No calls logged yet. Click “New call” to add one.</p>
+            </div>
+          </section>
+
+          <section id="view-projects" class="view">
+            <header class="view-header">
+              <h2>Projects</h2>
+              <p>Organize related work, milestones, and major outcomes.</p>
+            </header>
+            <div id="projects-list" class="card-grid empty-state">
+              <p>No projects yet. Click “New project” to get started.</p>
+            </div>
+          </section>
+
+          <section id="view-tasks" class="view">
+            <header class="view-header">
+              <h2>Tasks</h2>
+              <p>Standalone to-dos, linked to projects only when you need.</p>
+            </header>
+            <div id="tasks-list" class="card-grid empty-state">
+              <p>No tasks yet. Click “New task” to add your first one.</p>
+            </div>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <div id="modal-backdrop" class="modal-backdrop hidden">
+      <div class="modal">
+        <header class="modal-header">
+          <h2 id="modal-title">New item</h2>
+          <button id="modal-close" class="icon-btn" aria-label="Close">
+            ✕
+          </button>
+        </header>
+        <form id="modal-form" class="modal-body">
+          <!-- Dynamic form fields injected by app.js -->
+        </form>
+        <footer class="modal-footer">
+          <button type="button" id="modal-cancel" class="ghost-btn">Cancel</button>
+          <button type="submit" form="modal-form" class="primary-btn">Save</button>
+        </footer>
+      </div>
+    </div>
+
+    <div id="lock-backdrop" class="modal-backdrop hidden" aria-hidden="true">
+      <div class="modal">
+        <header class="modal-header">
+          <h2>Locked</h2>
+        </header>
+        <div class="modal-body">
+          <div class="field">
+            <label for="lock-pin">Enter PIN</label>
+            <input id="lock-pin" type="password" inputmode="numeric" autocomplete="current-password" />
+          </div>
+          <div class="lock-actions">
+            <button id="unlock-btn" class="primary-btn">Unlock</button>
+            <button id="unlock-reset" class="ghost-btn">Forgot PIN? Reset</button>
+          </div>
+          <p class="help-text">
+            This lock protects your data on this device/browser. It’s not enterprise-grade security.
+          </p>
+          <p id="lock-error" class="lock-error hidden"></p>
+        </div>
+      </div>
+    </div>
+
+    <template id="note-form-template">
+      <div class="field">
+        <label for="note-title">Title</label>
+        <input id="note-title" name="title" required />
+      </div>
+      <div class="field">
+        <label for="note-body">Note</label>
+        <textarea id="note-body" name="body" rows="5"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="note-tags">Tags (comma separated)</label>
+          <input id="note-tags" name="tags" placeholder="meeting, finance" />
+        </div>
+        <div class="field">
+          <label for="note-priority">Priority</label>
+          <select id="note-priority" name="priority">
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+      </div>
+    </template>
+
+    <template id="call-form-template">
+      <div class="field-row">
+        <div class="field">
+          <label for="call-contact">Contact / Company</label>
+          <input id="call-contact" name="contact" required />
+        </div>
+        <div class="field">
+          <label for="call-date">Date</label>
+          <input id="call-date" name="date" type="date" />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="call-direction">Type</label>
+          <select id="call-direction" name="direction">
+            <option value="outgoing">Outgoing</option>
+            <option value="incoming">Incoming</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="call-priority">Priority</label>
+          <select id="call-priority" name="priority">
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Recording (microphone)</label>
+        <div class="record-controls">
+          <button type="button" id="call-record-start" class="ghost-btn small">
+            Start recording
+          </button>
+          <button type="button" id="call-record-stop" class="ghost-btn small" disabled>
+            Stop
+          </button>
+          <span id="call-record-status" class="record-status-text"></span>
+        </div>
+        <small class="help-text"
+          >This records from your microphone only. After stopping, download the audio file and
+          save it where you prefer.</small
+        >
+        <audio id="call-record-audio" class="hidden" controls></audio>
+        <div class="field" style="margin-top: 0.4rem">
+          <label for="call-record-location">Where did you save the recording? (optional)</label>
+          <input
+            id="call-record-location"
+            name="recordingLocation"
+            placeholder="e.g. Teams link or D:\Calls\ClientA-2026-03-10.webm"
+          />
+        </div>
+      </div>
+      <div class="field">
+        <label for="call-summary">Summary / Notes</label>
+        <textarea id="call-summary" name="summary" rows="4"></textarea>
+      </div>
+      <div class="field">
+        <label for="call-followup">Follow-up tasks</label>
+        <textarea
+          id="call-followup"
+          name="followup"
+          rows="3"
+          placeholder="E.g., send proposal, book demo, share documents"
+        ></textarea>
+      </div>
+    </template>
+
+    <template id="project-form-template">
+      <div class="field">
+        <label for="project-name">Project name</label>
+        <input id="project-name" name="name" required />
+      </div>
+      <div class="field">
+        <label for="project-description">Description</label>
+        <textarea id="project-description" name="description" rows="4"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="project-priority">Priority</label>
+          <select id="project-priority" name="priority">
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="project-due">Due date (optional)</label>
+          <input id="project-due" name="dueDate" type="date" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="project-tasks">Tasks (one per line, optional)</label>
+        <textarea
+          id="project-tasks"
+          name="tasks"
+          rows="4"
+          placeholder="Design mockups&#10;Get approvals&#10;Launch internal pilot"
+        ></textarea>
+      </div>
+    </template>
+
+    <template id="task-form-template">
+      <div class="field">
+        <label for="task-title">Task</label>
+        <input id="task-title" name="title" required placeholder="e.g. Send proposal to client" />
+      </div>
+      <div class="field">
+        <label for="task-description">Details (optional)</label>
+        <textarea id="task-description" name="description" rows="3"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="task-priority">Priority</label>
+          <select id="task-priority" name="priority">
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="task-due">Due date (optional)</label>
+          <input id="task-due" name="dueDate" type="date" />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="task-project-select">Linked project (optional)</label>
+          <select id="task-project-select" name="projectSelect">
+            <option value="">None</option>
+            <option value="__other__">Other…</option>
+          </select>
+          <input
+            id="task-project-other"
+            class="hidden"
+            name="projectOther"
+            placeholder="Type project name…"
+          />
+        </div>
+        <div class="field">
+          <label for="task-status">Status</label>
+          <select id="task-status" name="status">
+            <option value="not-started">Not started</option>
+            <option value="in-progress">In progress</option>
+            <option value="done">Done</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="task-reminder">Reminder (optional)</label>
+          <input id="task-reminder" name="reminderAt" type="datetime-local" />
+        </div>
+        <div class="field">
+          <label for="task-pinned">Pin</label>
+          <select id="task-pinned" name="pinned">
+            <option value="false">Not pinned</option>
+            <option value="true">Pinned</option>
+          </select>
+        </div>
+      </div>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>
 
