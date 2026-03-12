@@ -64,6 +64,80 @@ html[data-theme='light'] body::before {
   opacity: 1;
 }
 
+html[data-theme='light'] .top-bar,
+html[data-theme='light'] .sidebar,
+html[data-theme='light'] .content {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(15, 23, 42, 0.12);
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+}
+
+html[data-theme='light'] .brand-logo {
+  color: #0f172a;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.16), 0 0 18px rgba(79, 70, 229, 0.25);
+}
+
+html[data-theme='light'] #search-input {
+  background: radial-gradient(circle at 0 0, rgba(15, 23, 42, 0.06), rgba(255, 255, 255, 0.92));
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.14);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+html[data-theme='light'] #search-input::placeholder {
+  color: rgba(15, 23, 42, 0.5);
+}
+
+html[data-theme='light'] input,
+html[data-theme='light'] select,
+html[data-theme='light'] textarea {
+  background: rgba(255, 255, 255, 0.96);
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.16);
+}
+
+html[data-theme='light'] .ghost-btn {
+  background: rgba(255, 255, 255, 0.9);
+  color: rgba(15, 23, 42, 0.78);
+  border-color: rgba(15, 23, 42, 0.18);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+}
+
+html[data-theme='light'] .nav-item:hover,
+html[data-theme='light'] .pill:hover {
+  background: rgba(15, 23, 42, 0.06);
+  color: #0f172a;
+}
+
+html[data-theme='light'] .pill {
+  background: rgba(255, 255, 255, 0.9);
+  color: rgba(15, 23, 42, 0.7);
+  border-color: rgba(15, 23, 42, 0.18);
+}
+
+html[data-theme='light'] .card {
+  background:
+    radial-gradient(circle at 0 0, rgba(15, 23, 42, 0.04), rgba(255, 255, 255, 0.96)),
+    linear-gradient(135deg, rgba(79, 70, 229, 0.06), rgba(255, 255, 255, 0.96));
+  border-color: rgba(15, 23, 42, 0.12);
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.08);
+}
+
+html[data-theme='light'] .card-body {
+  color: rgba(15, 23, 42, 0.86);
+}
+
+html[data-theme='light'] .tag {
+  background: rgba(15, 23, 42, 0.06);
+  color: rgba(15, 23, 42, 0.75);
+}
+
+html[data-theme='light'] .card-actions button {
+  background: rgba(255, 255, 255, 0.9);
+  color: rgba(15, 23, 42, 0.78);
+  border-color: rgba(15, 23, 42, 0.16);
+}
+
 main {
   padding: 1.5rem;
 }
